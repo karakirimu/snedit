@@ -25,6 +25,7 @@ function App() {
     if(images.get().length > 0) {
       images.get().forEach((image) => URL.revokeObjectURL(image.src.objectURL));
       images.set([]);
+      selectedIndex.set(0);
     }
     
     const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
