@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Box, HStack, IconButton, Button, Input, Stack } from "@chakra-ui/react";
+import { Box, HStack, IconButton, Button, Input, Stack, Text } from "@chakra-ui/react";
 import {
   MenuContent,
   MenuItem,
@@ -25,6 +25,7 @@ import { FaCog } from 'react-icons/fa';
 import { Field } from "@/components/ui/field"
 import { Property } from '@/functions/useProperty';
 import { InfoTip } from "@/components/ui/toggle-tip"
+import { Switch } from './ui/switch';
 
 interface HeaderProps {
   onImageFolderSelect: (files: FileList) => void;
@@ -69,57 +70,6 @@ const Header: React.FC<HeaderProps> = ({ onImageFolderSelect, onMusicFolderSelec
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [selectedIndex, lastImageIndex, onIndexChange]);
-
-  const PackageSettingsDialog = () => {
-    return (
-      <>
-        <DialogRoot initialFocusEl={() => ref.current}>
-          <DialogTrigger asChild>
-            <IconButton variant="outline" size="sm">
-              <FaCog />
-            </IconButton>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Package settings</DialogTitle>
-            </DialogHeader>
-            <DialogBody pb="4">
-              <Stack gap="4">
-                <Field label="Package name">
-                  <Input ref={ref} placeholder="package name here"
-                    value={config.get().package_name}
-                    onChange={(e) => { config.set({ ...config.get(), package_name: e.target.value }) }} />
-                </Field>
-                <Field label="Description">
-                  <Input placeholder="description"
-                    value={config.get().description}
-                    onChange={(e) => { config.set({ ...config.get(), description: e.target.value }) }} />
-                </Field>
-                <Field label={`Text speed: ${config.get().text_speed} (ms)`}>
-                  <HStack w={"full"}>
-                    <Slider
-                      ml={4}
-                      w={"full"}
-                      step={10}
-                      min={0}
-                      value={[config.get().text_speed]}
-                      max={10000}
-                      onValueChange={(e) => { config.set({ ...config.get(), text_speed: e.value[0] })}}/>
-                    <InfoTip content="Time interval to display one character (in milliseconds)" />
-                  </HStack>
-                </Field>
-              </Stack>
-            </DialogBody>
-            <DialogFooter>
-              <DialogActionTrigger asChild>
-                <Button variant="outline">Close</Button>
-              </DialogActionTrigger>
-            </DialogFooter>
-          </DialogContent>
-        </DialogRoot>
-      </>
-    );
-  }
 
   return (
     <Box as="header" bg={"gray.700"} borderBottom={"1px solid gray.950"} color="white" p={1}>
@@ -174,7 +124,68 @@ const Header: React.FC<HeaderProps> = ({ onImageFolderSelect, onMusicFolderSelec
           </HStack>
         )}
         <HStack gap={4}>
-          <PackageSettingsDialog />
+          <DialogRoot initialFocusEl={() => ref.current}>
+            <DialogTrigger asChild>
+              <IconButton variant="outline" size="sm">
+                <FaCog />
+              </IconButton>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Package settings</DialogTitle>
+              </DialogHeader>
+              <DialogBody pb="4">
+                <Stack gap="4">
+                  <Field label="Package name">
+                    <Input ref={ref} placeholder="package name here"
+                      value={config.get().package_name}
+                      onChange={(e) => { config.set({ ...config.get(), package_name: e.target.value }) }} />
+                  </Field>
+                  <Field label="Description">
+                    <Input placeholder="description"
+                      value={config.get().description}
+                      onChange={(e) => { config.set({ ...config.get(), description: e.target.value }) }} />
+                  </Field>
+                  <Text>Player default settings</Text>
+                  <Field label={`Text speed: ${config.get().player.text_speed} (ms)`}>
+                    <HStack w={"full"}>
+                      <Slider
+                        w={"full"}
+                        step={10}
+                        min={0}
+                        value={[config.get().player.text_speed]}
+                        max={10000}
+                        onValueChange={(e) => { config.set({ ...config.get(), player: { ...config.get().player, text_speed: e.value[0] }})}}/>
+                      <InfoTip content="Time interval to display one character (in milliseconds)" />
+                    </HStack>
+                  </Field>
+                  <Field label={`Volume: ${config.get().player.volume}`}>
+                    <HStack w={"full"}>
+                      <Slider
+                        w={"full"}
+                        step={1}
+                        min={0}
+                        value={[config.get().player.volume]}
+                        max={100}
+                        onValueChange={(e) => { config.set({ ...config.get(), player: { ...config.get().player, volume: e.value[0] }})}}/>
+                      <InfoTip content="Default Volume of the player" />
+                    </HStack>
+                  </Field>
+                  <Field label="Autoplay">
+                    <Switch checked={config.get().player.autoplay} 
+                            onCheckedChange={(e) => { config.set({ ...config.get(), player: { ...config.get().player, autoplay: e.checked }})}}
+                            mt={2}>
+                    </Switch>
+                  </Field>
+                </Stack>
+              </DialogBody>
+              <DialogFooter>
+                <DialogActionTrigger asChild>
+                  <Button variant="outline">Close</Button>
+                </DialogActionTrigger>
+              </DialogFooter>
+            </DialogContent>
+          </DialogRoot>
         </HStack>
       </HStack>
     </Box>

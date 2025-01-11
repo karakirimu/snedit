@@ -91,7 +91,7 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
                          caption={dataIndex !== -1 && selected && selected.text !== undefined ? selected.text.data : ""}
                          w={"full"}
                          mt={2}
-                         speed={config.get().text_speed} />
+                         speed={config.get().player.text_speed} />
         </Flex>
         <Box w={"100%"}>
           <Card.Body h={"100%"}>

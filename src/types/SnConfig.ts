@@ -28,7 +28,11 @@ export type SnConfig = {
     version: string;
     package_name: string;
     description: string;
-    text_speed: number;
+    player: {
+      text_speed: number;
+      autoplay: boolean;
+      volume: number;
+    }
     src: SnSource;
     playlist: SnPlayList[];
 
@@ -44,9 +48,13 @@ export function createSnConfig(title: string, description: string): SnConfig {
         version: '1.0.0',
         package_name: title,
         description,
-        text_speed: 100,
-        src: { image: [], audio: [], text: [] },
+        player: {
+            text_speed: 100,
+            autoplay: false,
+            volume: 100
+        },
         playlist: [],
+        src: { image: [], audio: [], text: [] },
         add(element: SnPlayList): void {
             this.playlist.push(element);
         },
