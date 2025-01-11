@@ -1,8 +1,27 @@
-export type SnElement = {
-    no: number;
-    image: string;
-    audio?: string;
-    text?: string;
+export type SnBlob = {
+    id: string;
+    name: string;
+    data: string;
+}
+
+export type SnSource = {
+    image: SnBlob[];
+    audio: SnBlob[];
+    text: SnBlob[];
+}
+
+export type SnPlayList = {
+    id: string;
+    image_id?: string;
+    audio_id?: string;
+    text_id?: string;
+}
+
+export type SnPlayListParse = {
+    id: string;
+    image?: SnBlob;
+    audio?: SnBlob;
+    text?: SnBlob;
 }
 
 export type SnConfig = {
@@ -10,39 +29,53 @@ export type SnConfig = {
     package_name: string;
     description: string;
     text_speed: number;
-    data: SnElement[];
+    src: SnSource;
+    playlist: SnPlayList[];
 
-    addElement(element: SnElement): void;
-    removeElement(no: number): void;
-    editElement(no: number, newElement: SnElement): void;
-    insertElement(no: number, newElement: SnElement): void;
+    add(element: SnPlayList): void;
+    remove(no: number): void;
+    edit(no: number, newElement: SnPlayList): void;
+    insert(no: number, newElement: SnPlayList): void;
+    getSource(index: number): SnPlayListParse;
 }
 
-export function createSnConfig(title: string, description: string, data: SnElement[]): SnConfig {
+export function createSnConfig(title: string, description: string): SnConfig {
     const config: SnConfig = {
         version: '1.0.0',
         package_name: title,
         description,
         text_speed: 100,
-        data,
-        addElement(element: SnElement): void {
-            this.data.push(element);
+        src: { image: [], audio: [], text: [] },
+        playlist: [],
+        add(element: SnPlayList): void {
+            this.playlist.push(element);
         },
-        removeElement(no: number): void {
-            this.data = this.data.filter(element => element.no !== no);
+        remove(index: number): void {
+            this.playlist = this.playlist.filter((_, no) => index !== no);
         },
-        editElement(no: number, newElement: SnElement): void {
-            const index = this.data.findIndex(element => element.no === no);
-            if (index !== -1) {
-                this.data[index] = newElement;
+        edit(index: number, newElement: SnPlayList): void {
+            if (this.playlist[index] !== undefined) {
+                this.playlist[index] = newElement;
             }
         },
-        insertElement(no: number, newElement: SnElement): void {
-            const index = this.data.findIndex(element => element.no === no);
-            if (index !== -1) {
-                this.data.splice(index, 0, newElement);
+        insert(index: number, newElement: SnPlayList): void {
+            if (this.playlist[index] !== undefined) {
+                this.playlist.splice(index, 0, newElement);
             }
         },
+        getSource(index: number): SnPlayListParse {
+            const playlist = this.playlist[index];
+            if (playlist === undefined) {
+                return { id: '', image: undefined, audio: undefined, text: undefined };
+            }
+
+            return {
+                id: playlist.id,
+                image: this.src.image.find((img) => img.id === playlist.image_id) || undefined,
+                audio: this.src.audio.find((audio) => audio.id === playlist.audio_id) || undefined,
+                text: this.src.text.find((text) => text.id === playlist.text_id) || undefined
+            };
+        }
     };
     return config;
 }

@@ -10,26 +10,33 @@ import {
 } from "@/components/ui/select"
 import CaptionCard, { CaptionCardHandle } from './CaptionCard';
 import { SnConfig } from '@/types/SnConfig';
-import { Property } from '@/functions/useProperty';
+import { Property, useProperty } from '@/functions/useProperty';
 import AudioPlayer from './AudioPlayer';
 import { Field } from "@/components/ui/field"
 import { MdReplay } from 'react-icons/md';
+import { v4 } from 'uuid';
+
+export type SourceMap = {
+  id: string;
+  src: FileAttribute;
+}
 
 type SettingCardProps = {
-  imageSrc: FileAttribute;
-  audioSrc: FileAttribute[];
-  index: number|null;
+  imageSrc: SourceMap[];
+  audioSrc: SourceMap[];
+  index: number;
   config: Property<SnConfig>;
 }
 
 const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audioSrc }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const dataIndex = index !== null ? index - 1 : -1;
-  const audioPath = dataIndex !== -1 && config.get().data[dataIndex].audio !== undefined ? [config.get().data[dataIndex].audio!] : ["None"];
+  const dataIndex = index - 1;
+  const selected = dataIndex !== -1 && config ? config.get().getSource(dataIndex) : undefined;
+  const selectedAudio = useProperty<string[]>(selected && selected.audio ? [selected.audio.name] : ["None"]);
   const audioList = createListCollection({
      items: audioSrc,
-     itemToString: (item) => item.path,
-     itemToValue: (item) => item.path
+     itemToString: (item) => item.src.name,
+     itemToValue: (item) => item.id
   });
   const captionCardRef = useRef<CaptionCardHandle>(null);
 
@@ -41,9 +48,9 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
     const canvas = canvasRef.current;
     const context = canvas?.getContext('2d');
 
-    if (canvas && context && imageSrc) {
+    if (canvas && context && imageSrc && dataIndex !== -1) {
       const image = new Image();
-      image.src = imageSrc.objectURL;
+      image.src = imageSrc[dataIndex].src.objectURL;
       image.onload = () => {
         const maxWidth = window.innerWidth - 200; // Adjust for sidebar width
         const maxHeight = window.innerHeight - 40; // Adjust for header height
@@ -65,7 +72,7 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
       };
     }
 
-  }, [imageSrc]);
+  }, [dataIndex, imageSrc]);
 
   useEffect(() => {
     drawImage();
@@ -81,7 +88,7 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
         <Flex w={"100%"} maxH={"100%"} alignContent={"center"} justifyContent={"center"} alignItems={"center"} direction={"column"}>
             <canvas ref={canvasRef} style={{ border: '0px solid black', maxWidth: '100%', objectFit: "contain" }} />
             <CaptionCard ref={captionCardRef}
-                         caption={dataIndex !== -1 && config.get().data[dataIndex].text !== undefined ? config.get().data[dataIndex].text : ""}
+                         caption={dataIndex !== -1 && selected && selected.text !== undefined ? selected.text.data : ""}
                          w={"full"}
                          mt={2}
                          speed={config.get().text_speed} />
@@ -92,24 +99,28 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
             <Card.Description h={"100%"} overflowY="auto">
               <Stack gap="4" mx={4}>
                 <Field label="Image">
-                  <Input id='image-path' 
+                  <Input id='image-name' 
                           type="text"
-                          placeholder="image path"
+                          placeholder="image name"
                           size="md"
-                          value={dataIndex !== -1 && config.get().data[dataIndex].image !== undefined ? config.get().data[dataIndex].image : ""}
+                          value={dataIndex !== -1 && selected && selected.image !== undefined ? selected.image.name : ""}
                           defaultValue={""} readOnly disabled/>
                 </Field>
                 <Field label="Music">
                   <SelectRoot key={"music-select"}
                               size={"md"}
                               collection={audioList}
-                              value={audioPath}
+                              value={selectedAudio.get()}
                               onValueChange={(e) => {  
                                 if(dataIndex !== -1) {
                                   config.set((prev) => {
-                                    const n = prev.data[dataIndex];
-                                    n.audio = e.items[0].path;
-                                    prev.editElement(index!, n);
+                                    const n = prev.playlist[dataIndex];
+                                    const contains = prev.src.audio.findIndex((f) => f.id === e.items[0].id);
+                                    if(contains !== -1) {
+                                      n.audio_id = prev.src.audio[contains].id;
+                                      prev.edit(dataIndex, n);
+                                      selectedAudio.set(e.value);
+                                    }
                                     return {...prev};
                                   });
                                 }
@@ -119,13 +130,13 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
                     </SelectTrigger>
                     <SelectContent>
                       {audioList.items.map((file) => (
-                        <SelectItem area-labelledby={`music-${file.path}`} item={file.path} key={file.path}>
-                          {file.path}
+                        <SelectItem area-labelledby={`music-${file.id}`} item={file} key={file.id}>
+                          {file.src.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </SelectRoot>
-                  {(audioPath[0] !== "None") ? <AudioPlayer fileUrl={audioSrc.find((f) => f.path === audioPath[0])!.objectURL} /> : <></>}
+                  {(selected !== undefined && selected.audio) ? <AudioPlayer fileUrl={audioSrc.find((f) => f.id === selected.audio?.id)!.src.objectURL} /> : <></>}
                 </Field>
                 <Field label="Caption">
                   <Box w={"full"} display={"flex"} justifyContent={"flex-end"}>
@@ -138,12 +149,17 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
                     id='caption-text'
                     h={"300px"}
                     placeholder="Caption here..."
-                    value={dataIndex !== -1 && config.get().data[dataIndex].text !== undefined ? config.get().data[dataIndex].text : ""}
+                    value={dataIndex !== -1 && selected && selected.text !== undefined ? selected.text.data : ""}
                     onChange={(e) => dataIndex !== -1 
                       && config.set((prev) => {
-                        const n = prev.data[dataIndex];
-                        n.text = e.target.value;
-                        prev.editElement(index!, n);
+                        const n = prev.playlist[dataIndex];
+                        if(n.text_id === "" || n.text_id === undefined){
+                          n.text_id = v4();
+                          prev.src.text.push({ id: n.text_id, name: "", data: e.target.value });
+                        }else{
+                          prev.src.text.find((t) => t.id === n.text_id)!.data = e.target.value;
+                        }
+                        prev.edit(dataIndex, n);
                       return {...prev};
                     })}
                   />

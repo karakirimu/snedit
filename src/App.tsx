@@ -1,79 +1,94 @@
 import { HStack } from "@chakra-ui/react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
-import SettingCard from "@/components/SettingCard";
-import { FileAttribute } from './types/FileAttribute';
+import SettingCard, { SourceMap } from "@/components/SettingCard";
 import { createSnConfig, exportSnConfig, SnConfig } from './types/SnConfig';
 import { useProperty } from './functions/useProperty';
+import { decodeBase64, encodeBase64 } from "./functions/base64";
+import { v4 } from "uuid";
 
 function App() {
-  const images = useProperty<FileAttribute[]>([]);
-  const musics = useProperty<FileAttribute[]>([]);
+  const images = useProperty<SourceMap[]>([]);
+  const musics = useProperty<SourceMap[]>([]);
   const selectedIndex = useProperty<number>(0);
   const imageLastIndex = useProperty<number | null>(null);
-  const selectedImage = useProperty<FileAttribute | null>(null);
-  const snConfig = useProperty<SnConfig>(createSnConfig("", "", []));
+  const snConfig = useProperty<SnConfig>(createSnConfig("No Title", "No Description"));
  
   const handleIndexClick = (index: number) => {
     if(index < 1 || index > images.get().length) {
       return;
     }
-    const imageSrc = images.get()[index - 1];
-    selectedImage.set(imageSrc);
     selectedIndex.set(index);
   };
 
-  const openImageFolder = (files: FileList) => {
+  const openImageFolder = async (files: FileList) => {
     if(images.get().length > 0) {
-      images.get().forEach((image) => URL.revokeObjectURL(image.objectURL));
+      images.get().forEach((image) => URL.revokeObjectURL(image.src.objectURL));
       images.set([]);
     }
     
     const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
-    const imageUrls = imageFiles.map(file => {
-      return {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        path: file.webkitRelativePath,
-        objectURL: URL.createObjectURL(file)
-      };
+    const imageMap = imageFiles.map(file => {return {id: v4(), data: file}});
+    const imageUrls = imageMap.map(file => {
+      return { id: file.id, src:{
+        name: file.data.name,
+        size: file.data.size,
+        type: file.data.type,
+        path: file.data.webkitRelativePath,
+        objectURL: URL.createObjectURL(file.data)
+      }
+    };
     });
 
-    const snData = imageUrls.map((image, index) => {
-      return {
-        no: index + 1,
-        image: image.path
-      };
-    });
+    const snData = await Promise.all(imageMap.map(async (file) => {
+      const base64 = await encodeBase64(file.data);
+      return { id: file.id, name: file.data.name, data: base64 };
+    }));
+
     snConfig.set((prev) => {
-      prev.data = snData;
-      return prev;
+      snData.forEach((sn) => {
+        prev.src.image.push(sn)
+        // Generate image dependent playlist
+        prev.playlist.push({ id: v4(), image_id: sn.id, audio_id: '', text_id: '' });
+      });
+      return ({...prev })
     });
 
     if(imageUrls.length > 0) {
       imageLastIndex.set(imageUrls.length);
       images.set(imageUrls);
-      selectedImage.set(imageUrls[0]);
       selectedIndex.set(1);
     }
   };
   
-  const openMusicFolder = (files: FileList) => {
+  const openMusicFolder = async (files: FileList) => {
     if(musics.get().length > 0) {
-      musics.get().forEach((music) => URL.revokeObjectURL(music.objectURL));
+      musics.get().forEach((music) => URL.revokeObjectURL(music.src.objectURL));
       musics.set([]);
     }
 
     const audioFiles = Array.from(files).filter(file => file.type.startsWith('audio/'));
-    const audioAttributes = audioFiles.map(file => {
-      return {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        path: file.webkitRelativePath,
-        objectURL: URL.createObjectURL(file)
-      };
+    const audioMap = audioFiles.map(file => {return {id: v4(), data: file}});
+    const audioAttributes = audioMap.map(d => {
+      return { id: d.id,
+                src: {
+                name: d.data.name,
+                size: d.data.size,
+                type: d.data.type,
+                path: d.data.webkitRelativePath,
+                objectURL: URL.createObjectURL(d.data)
+              }
+            };
+    });
+
+    const snData = await Promise.all(audioMap.map(async (file, index) => {
+      const base64 = await encodeBase64(file.data);
+      return { id: file.id, name: audioFiles[index].name, data: base64 };
+    }));
+
+    snConfig.set((prev) => {
+      snData.forEach((sn) => prev.src.audio.push(sn));
+      return ({...prev })
     });
 
     if(audioAttributes.length > 0) {
@@ -85,9 +100,55 @@ function App() {
     exportSnConfig(snConfig.get());
   };
 
-  const importConfig = (config: SnConfig) => {
-    snConfig.set(config);
-  }
+  const importConfig = async (configData: SnConfig) => {
+    const imageUrls = await Promise.all(configData.src.image.map(async (item) => {
+      const blob = decodeBase64(item.data);
+      const objectURL = URL.createObjectURL(blob);
+      return {
+        id: item.id,
+        src: {
+          name: item.name,
+          size: blob.size,
+          type: blob.type,
+          path: '', // You can set the path if needed
+          objectURL
+        }
+    };
+    }));
+
+    const audioUrls = await Promise.all(configData.src.audio.map(async (item) => {
+      if(item === undefined) {
+        return { id: "", src: {
+          name: "Unknown",
+          size: 0,
+          type: "",
+          path: '', // You can set the path if needed
+          objectURL: ""
+        }};
+      }
+      const blob = decodeBase64(item.data);
+      const objectURL = URL.createObjectURL(blob);
+      return {
+        id: item.id,
+        src:{
+            name: item.name,
+            size: blob.size,
+            type: blob.type,
+            path: '', // You can set the path if needed
+            objectURL
+          }
+        };
+    }))
+  
+    snConfig.set((prev) => ({...prev, ...configData}));
+  
+    if (imageUrls.length > 0) {
+      imageLastIndex.set(imageUrls.length);
+      images.set(imageUrls);
+      musics.set(audioUrls);
+      selectedIndex.set(1);
+    }
+  };
 
   return (
     <>
@@ -101,7 +162,7 @@ function App() {
               lastImageIndex={imageLastIndex.get()}/>
       <HStack align="start" p={0} m={0} gap={0}>
       <Sidebar images={images} selectedIndex={selectedIndex} config={snConfig} onClick={handleIndexClick} onImageFolderSelect={openImageFolder} />
-      {selectedImage.get() && <SettingCard imageSrc={selectedImage.get()!} index={selectedIndex.get()} config={snConfig} audioSrc={musics.get()} />}
+      {selectedIndex.get() !== 0 && <SettingCard imageSrc={images.get()} index={selectedIndex.get()} config={snConfig} audioSrc={musics.get()} />}
       </HStack>
     </>
   );

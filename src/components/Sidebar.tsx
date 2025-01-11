@@ -8,9 +8,10 @@ import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import { SnConfig } from '@/types/SnConfig';
 import { Property } from '@/functions/useProperty';
+import { SourceMap } from './SettingCard';
 
 interface SidebarProps {
-  images: Property<FileAttribute[]>;
+  images: Property<SourceMap[]>;
   selectedIndex: Property<number>;
   config: Property<SnConfig>;
   onClick: (index: number) => void;
@@ -41,15 +42,15 @@ const Sidebar: React.FC<SidebarProps> = ({ images, selectedIndex, config, onClic
 
     if (active.id !== over.id) {
       const im = images.get();
-      const oldIndex = im.findIndex((img) => img.objectURL === active.id);
-      const newIndex = im.findIndex((img) => img.objectURL === over.id);
+      const oldIndex = im.findIndex((img) => img.src.objectURL === active.id);
+      const newIndex = im.findIndex((img) => img.src.objectURL === over.id);
 
       const reorderedImages = arrayMove(im, oldIndex, newIndex);
       images.set(reorderedImages);
 
       // Reorder SnConfig.data to match the new image order
-      const reorderedData = arrayMove(config.get().data, oldIndex, newIndex);
-      config.set((prev) => ({ ...prev, data: reorderedData }));
+      const reorderedData = arrayMove(config.get().playlist, oldIndex, newIndex);
+      config.set((prev) => ({ ...prev, playlist: reorderedData }));
       selectedIndex.set(newIndex + 1);
     }
   };
@@ -57,15 +58,15 @@ const Sidebar: React.FC<SidebarProps> = ({ images, selectedIndex, config, onClic
   return (
     <Box as="aside" bg="gray.800" borderRight={"1px solid gray.950"} minW="220px" maxW="220px" p={4} minH="calc(100vh - 40px)" maxH="calc(100vh - 40px)" overflowY="auto">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={images.get().map((img) => img.objectURL)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={images.get().map((img) => img.src.objectURL)} strategy={verticalListSortingStrategy}>
           <VStack align="start" gap={4}>
             {images.get().length > 0 ? (
-              images.get().map((src, index) => (
+              images.get().map((im, index) => (
                 <SortableItem
-                  key={src.objectURL}
-                  id={src.objectURL}
+                  key={im.src.objectURL}
+                  id={im.src.objectURL}
                   index={index}
-                  src={src}
+                  src={im.src}
                   selectedImageIndex={selectedIndex.get()}
                   onClick={onClick}
                   selectedImageRef={selectedImageRef}
