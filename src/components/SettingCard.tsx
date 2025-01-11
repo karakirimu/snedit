@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select"
 import CaptionCard, { CaptionCardHandle } from './CaptionCard';
 import { SnConfig } from '@/types/SnConfig';
-import { Property, useProperty } from '@/functions/useProperty';
+import { Property } from '@/functions/useProperty';
 import AudioPlayer from './AudioPlayer';
 import { Field } from "@/components/ui/field"
 import { MdReplay } from 'react-icons/md';
@@ -32,7 +32,6 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dataIndex = index - 1;
   const selected = dataIndex !== -1 && config ? config.get().getSource(dataIndex) : undefined;
-  const selectedAudio = useProperty<string[]>(selected && selected.audio ? [selected.audio.name] : ["None"]);
   const audioList = createListCollection({
      items: audioSrc,
      itemToString: (item) => item.src.name,
@@ -110,7 +109,7 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
                   <SelectRoot key={"music-select"}
                               size={"md"}
                               collection={audioList}
-                              value={selectedAudio.get()}
+                              value={selected !== undefined && selected.audio ? [selected.audio.id] : []}
                               onValueChange={(e) => {  
                                 if(dataIndex !== -1) {
                                   config.set((prev) => {
@@ -119,7 +118,6 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
                                     if(contains !== -1) {
                                       n.audio_id = prev.src.audio[contains].id;
                                       prev.edit(dataIndex, n);
-                                      selectedAudio.set(e.value);
                                     }
                                     return {...prev};
                                   });
