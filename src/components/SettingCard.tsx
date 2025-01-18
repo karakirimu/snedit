@@ -1,5 +1,5 @@
 import { FileAttribute } from '@/types/FileAttribute';
-import { Box, Card, Input, createListCollection, Textarea, Flex, Stack, IconButton } from '@chakra-ui/react';
+import { Box, Card, Input, createListCollection, Textarea, Flex, Stack, IconButton, HStack } from '@chakra-ui/react';
 import React, { useRef, useEffect, useCallback } from 'react';
 import {
   SelectContent,
@@ -9,12 +9,13 @@ import {
   SelectValueText,
 } from "@/components/ui/select"
 import CaptionCard, { CaptionCardHandle } from './CaptionCard';
-import { SnConfig } from '@/types/SnConfig';
-import { Property } from '@/functions/useProperty';
+import { SnCaptionPositionType, SnConfig } from '@/types/SnConfig';
+import { Property, useProperty } from '@/functions/useProperty';
 import AudioPlayer from './AudioPlayer';
 import { Field } from "@/components/ui/field"
 import { MdReplay } from 'react-icons/md';
 import { v4 } from 'uuid';
+import { VscLayoutPanelOff, VscLayoutSidebarRightOff } from 'react-icons/vsc';
 
 export type SourceMap = {
   id: string;
@@ -30,6 +31,7 @@ type SettingCardProps = {
 
 const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audioSrc }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const caption_pos = useProperty<SnCaptionPositionType>('bottom');
   const dataIndex = index - 1;
   const selected = dataIndex !== -1 && config ? config.get().getSource(dataIndex) : undefined;
   const audioList = createListCollection({
@@ -71,7 +73,7 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
       };
     }
 
-  }, [dataIndex, imageSrc]);
+  }, [dataIndex, imageSrc, caption_pos.get()]);
 
   useEffect(() => {
     drawImage();
@@ -81,17 +83,37 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
     };
   }, [drawImage]);
 
+  function bottomLayout() {
+    return (
+      <Flex w={"100%"} maxH={"100%"} alignContent={"center"} justifyContent={"center"} alignItems={"center"} direction={"column"}>
+        <canvas ref={canvasRef} style={{ border: '0px solid black', maxWidth: '100%', objectFit: "contain" }} />
+        <CaptionCard ref={captionCardRef}
+                    caption={dataIndex !== -1 && selected && selected.text !== undefined ? selected.text.data : ""}
+                    w={"full"}
+                    mt={2}
+                      speed={config.get().player.text_speed} />
+      </Flex>
+    )
+  }
+
+  function rightLayout() {
+    return (
+      <HStack w={"100%"} maxH={"100%"} alignContent={"center"} justifyContent={"center"} alignItems={"center"} direction={"column"}>
+        <canvas ref={canvasRef} style={{ border: '0px solid black', maxWidth: '88%', objectFit: "contain" }} />
+        <CaptionCard 
+          // ref={captionCardRef}
+          caption={dataIndex !== -1 && selected && selected.text !== undefined ? selected.text.data : ""}
+          minW={"20ch"}
+          mt={2}
+          speed={config.get().player.text_speed} />
+      </HStack>
+    )
+  }
+
   return (
-    <Box alignItems="center" justifyContent="center" w={"100%"} height="calc(100vh - 40px)" p={4}>
+    <Box alignItems="center" justifyContent="center" w={"100%"} height="calc(100vh - 48px)" p={4}>
       <Card.Root flexDirection="row" overflow="hidden" w={"100%"} h={"100%"} p={0}>
-        <Flex w={"100%"} maxH={"100%"} alignContent={"center"} justifyContent={"center"} alignItems={"center"} direction={"column"}>
-            <canvas ref={canvasRef} style={{ border: '0px solid black', maxWidth: '100%', objectFit: "contain" }} />
-            <CaptionCard ref={captionCardRef}
-                         caption={dataIndex !== -1 && selected && selected.text !== undefined ? selected.text.data : ""}
-                         w={"full"}
-                         mt={2}
-                         speed={config.get().player.text_speed} />
-        </Flex>
+        {caption_pos.get() === 'bottom' ? bottomLayout() : rightLayout()}
         <Box w={"100%"}>
           <Card.Body h={"100%"}>
             <Card.Title mx={4} mb={2}>{`No. ${index} -Bind settings`}</Card.Title>
@@ -137,11 +159,33 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
                   {(selected !== undefined && selected.audio) ? <AudioPlayer fileUrl={audioSrc.find((f) => f.id === selected.audio?.id)!.src.objectURL} /> : <></>}
                 </Field>
                 <Field label="Caption">
-                  <Box w={"full"} display={"flex"} justifyContent={"flex-end"}>
+                  <HStack w={"full"} display={"flex"} justifyContent={"space-between"}>
+                    <HStack gapX={2}>
+                      <IconButton variant={caption_pos.get() === 'bottom' ? "solid" : "outline"} 
+                                  onClick={() => {
+                                    config.set((prev) => {
+                                      prev.playlist[dataIndex].config = {caption_position: 'bottom'};
+                                      return {...prev};
+                                    })
+                                    caption_pos.set('bottom');
+                                  }}> 
+                        <VscLayoutPanelOff />
+                      </IconButton>
+                      <IconButton variant={caption_pos.get() === 'right' ? "solid" : "outline"} 
+                                  onClick={() => {
+                                    config.set((prev) => {
+                                      prev.playlist[dataIndex].config = {caption_position: 'right'};
+                                      return {...prev};
+                                    })
+                                    caption_pos.set('right');
+                                  }}> 
+                        <VscLayoutSidebarRightOff />
+                      </IconButton>
+                    </HStack>
                     <IconButton variant={"outline"} onClick={handleReplay}>
                       <MdReplay />
                     </IconButton>
-                  </Box>
+                  </HStack>
                   <Textarea
                     resize="vertical"
                     id='caption-text'

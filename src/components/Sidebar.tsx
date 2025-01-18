@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ images, selectedIndex, config, onClic
   };
 
   return (
-    <Box as="aside" bg="gray.800" borderRight={"1px solid gray.950"} minW="220px" maxW="220px" p={4} minH="calc(100vh - 40px)" maxH="calc(100vh - 40px)" overflowY="auto">
+    <Box as="aside" bg="gray.800" borderRight={"1px solid gray.950"} minW="220px" maxW="220px" p={4} minH="calc(100vh - 44px)" maxH="calc(100vh - 44px)" overflowY="auto">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={images.get().map((img) => img.src.objectURL)} strategy={verticalListSortingStrategy}>
           <VStack align="start" gap={4}>

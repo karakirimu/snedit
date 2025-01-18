@@ -14,6 +14,7 @@ export interface CaptionCardHandle {
 const CaptionCard: React.ForwardRefRenderFunction<CaptionCardHandle, CaptionCardProps> = (props, ref) => {
     const temp = useProperty<string>("");
     const intervalRef = useRef<number | null>(null);
+    const captionRef = useRef<HTMLDivElement>(null);
 
     const startInterval = () => {
         const interval_time = props.speed;
@@ -26,6 +27,7 @@ const CaptionCard: React.ForwardRefRenderFunction<CaptionCardHandle, CaptionCard
             intervalRef.current = window.setInterval(() => {
                 temp.set(text += props.caption![index]);
                 index++;
+                window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 
                 if (index === props.caption!.length) {
                     clearInterval(intervalRef.current!);
@@ -44,6 +46,13 @@ const CaptionCard: React.ForwardRefRenderFunction<CaptionCardHandle, CaptionCard
         }
     }, [props.caption]);
 
+    useEffect(() => {
+        const el = captionRef.current;
+        if (el && el.clientHeight < el.scrollHeight) {
+          el.scrollTop = el.scrollHeight - el.clientHeight;
+        }
+      });
+
     useImperativeHandle(ref, () => ({
         replay: () => {
             clearInterval(intervalRef.current!);
@@ -54,6 +63,7 @@ const CaptionCard: React.ForwardRefRenderFunction<CaptionCardHandle, CaptionCard
     return (
         (props.caption) ? (
             <Box
+                ref={captionRef}
                 scrollBehavior={"smooth"}
                 as="section"
                 bg="gray.800"

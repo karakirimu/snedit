@@ -1,3 +1,4 @@
+export type SnCaptionPositionType = "bottom" | "right";
 export type SnBlob = {
     id: string;
     name: string;
@@ -15,6 +16,9 @@ export type SnPlayList = {
     image_id?: string;
     audio_id?: string;
     text_id?: string;
+    config: {
+      caption_position: SnCaptionPositionType;
+    } 
 }
 
 export type SnPlayListParse = {
@@ -22,6 +26,9 @@ export type SnPlayListParse = {
     image?: SnBlob;
     audio?: SnBlob;
     text?: SnBlob;
+    config: {
+      caption_position: SnCaptionPositionType;
+    } 
 }
 
 export type SnConfig = {
@@ -31,6 +38,7 @@ export type SnConfig = {
     player: {
       text_speed: number;
       autoplay: boolean;
+      autoplay_nextpage: boolean;
       volume: number;
     }
     src: SnSource;
@@ -51,6 +59,7 @@ export function createSnConfig(title: string, description: string): SnConfig {
         player: {
             text_speed: 100,
             autoplay: false,
+            autoplay_nextpage: false,
             volume: 100
         },
         playlist: [],
@@ -74,14 +83,15 @@ export function createSnConfig(title: string, description: string): SnConfig {
         getSource(index: number): SnPlayListParse {
             const playlist = this.playlist[index];
             if (playlist === undefined) {
-                return { id: '', image: undefined, audio: undefined, text: undefined };
+                return { id: '', image: undefined, audio: undefined, text: undefined, config: { caption_position: 'bottom' } };
             }
 
             return {
                 id: playlist.id,
                 image: this.src.image.find((img) => img.id === playlist.image_id) || undefined,
                 audio: this.src.audio.find((audio) => audio.id === playlist.audio_id) || undefined,
-                text: this.src.text.find((text) => text.id === playlist.text_id) || undefined
+                text: this.src.text.find((text) => text.id === playlist.text_id) || undefined,
+                config: playlist.config
             };
         }
     };

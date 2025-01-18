@@ -146,7 +146,7 @@ const Header: React.FC<HeaderProps> = ({ onImageFolderSelect, onMusicFolderSelec
                       value={config.get().description}
                       onChange={(e) => { config.set({ ...config.get(), description: e.target.value }) }} />
                   </Field>
-                  <Text>Player default settings</Text>
+                  <Text fontSize={"18px"} fontWeight={"medium"} mt={4}>Player default settings</Text>
                   <Field label={`Text speed: ${config.get().player.text_speed} (ms)`}>
                     <HStack w={"full"}>
                       <Slider
@@ -175,6 +175,12 @@ const Header: React.FC<HeaderProps> = ({ onImageFolderSelect, onMusicFolderSelec
                     <Switch checked={config.get().player.autoplay} 
                             onCheckedChange={(e) => { config.set({ ...config.get(), player: { ...config.get().player, autoplay: e.checked }})}}
                             mt={2}>
+                              Play music when pages are opened
+                    </Switch>
+                    <Switch checked={config.get().player.autoplay_nextpage} 
+                            onCheckedChange={(e) => { config.set({ ...config.get(), player: { ...config.get().player, autoplay_nextpage: e.checked }})}}
+                            mt={2}>
+                              Go to the next page after autoplay
                     </Switch>
                   </Field>
                 </Stack>
