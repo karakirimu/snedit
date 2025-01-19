@@ -9,8 +9,8 @@ import {
   SelectValueText,
 } from "@/components/ui/select"
 import CaptionCard, { CaptionCardHandle } from './CaptionCard';
-import { SnCaptionPositionType, SnConfig } from '@/types/SnConfig';
-import { Property, useProperty } from '@/functions/useProperty';
+import { SnConfig } from '@/types/SnConfig';
+import { Property } from '@/functions/useProperty';
 import AudioPlayer from './AudioPlayer';
 import { Field } from "@/components/ui/field"
 import { MdReplay } from 'react-icons/md';
@@ -31,7 +31,6 @@ type SettingCardProps = {
 
 const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audioSrc }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const caption_pos = useProperty<SnCaptionPositionType>('bottom');
   const dataIndex = index - 1;
   const selected = dataIndex !== -1 && config ? config.get().getSource(dataIndex) : undefined;
   const audioList = createListCollection({
@@ -44,6 +43,8 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
   const handleReplay = () => {
       captionCardRef.current?.replay();
   };
+
+  const isCaptionPositionDefined = dataIndex !== -1 && selected && selected.config.caption_position;
 
   const drawImage = useCallback(() => {
     const canvas = canvasRef.current;
@@ -73,7 +74,7 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
       };
     }
 
-  }, [dataIndex, imageSrc, caption_pos.get()]);
+  }, [dataIndex, imageSrc, isCaptionPositionDefined]);
 
   useEffect(() => {
     drawImage();
@@ -84,11 +85,14 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
   }, [drawImage]);
 
   function bottomLayout() {
+    const maxH = dataIndex !== -1 && selected && selected.text && selected.text !== undefined && selected.text.data.length > 0 ? '88%' : '100%';
     return (
       <Flex w={"100%"} maxH={"100%"} alignContent={"center"} justifyContent={"center"} alignItems={"center"} direction={"column"}>
-        <canvas ref={canvasRef} style={{ border: '0px solid black', maxWidth: '100%', objectFit: "contain" }} />
+        <canvas ref={canvasRef} style={{ border: '0px solid black', maxHeight: maxH, maxWidth: '100%', objectFit: "contain" }} />
         <CaptionCard ref={captionCardRef}
                     caption={dataIndex !== -1 && selected && selected.text !== undefined ? selected.text.data : ""}
+                    minH={"10ch"}
+                    maxH={"30ch"}
                     w={"full"}
                     mt={2}
                       speed={config.get().player.text_speed} />
@@ -97,13 +101,15 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
   }
 
   function rightLayout() {
+    const maxW = dataIndex !== -1 && selected && selected.text && selected.text !== undefined && selected.text.data.length > 0 ? '88%' : '100%';
     return (
       <HStack w={"100%"} maxH={"100%"} alignContent={"center"} justifyContent={"center"} alignItems={"center"} direction={"column"}>
-        <canvas ref={canvasRef} style={{ border: '0px solid black', maxWidth: '88%', objectFit: "contain" }} />
+        <canvas ref={canvasRef} style={{ border: '0px solid black', maxWidth: maxW, objectFit: "contain" }} />
         <CaptionCard 
           ref={captionCardRef}
           caption={dataIndex !== -1 && selected && selected.text !== undefined ? selected.text.data : ""}
           minW={"20ch"}
+          maxW={"40ch"}
           mt={2}
           speed={config.get().player.text_speed} />
       </HStack>
@@ -113,7 +119,7 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
   return (
     <Box alignItems="center" justifyContent="center" w={"100%"} height="calc(100vh - 48px)" p={4}>
       <Card.Root flexDirection="row" overflow="hidden" w={"100%"} h={"100%"} p={0}>
-        {caption_pos.get() === 'bottom' ? bottomLayout() : rightLayout()}
+        {dataIndex !== -1 && selected && selected.config.caption_position === 'bottom' ? bottomLayout() : rightLayout()}
         <Box w={"100%"}>
           <Card.Body h={"100%"}>
             <Card.Title mx={4} mb={2}>{`No. ${index} -Bind settings`}</Card.Title>
@@ -161,23 +167,21 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
                 <Field label="Caption">
                   <HStack w={"full"} display={"flex"} justifyContent={"space-between"}>
                     <HStack gapX={2}>
-                      <IconButton variant={caption_pos.get() === 'bottom' ? "solid" : "outline"} 
+                      <IconButton variant={dataIndex !== -1 && selected && selected.config.caption_position === 'bottom' ? "solid" : "outline"} 
                                   onClick={() => {
                                     config.set((prev) => {
                                       prev.playlist[dataIndex].config = {caption_position: 'bottom'};
                                       return {...prev};
                                     })
-                                    caption_pos.set('bottom');
                                   }}> 
                         <VscLayoutPanelOff />
                       </IconButton>
-                      <IconButton variant={caption_pos.get() === 'right' ? "solid" : "outline"} 
+                      <IconButton variant={dataIndex !== -1 && selected && selected.config.caption_position === 'right' ? "solid" : "outline"} 
                                   onClick={() => {
                                     config.set((prev) => {
                                       prev.playlist[dataIndex].config = {caption_position: 'right'};
                                       return {...prev};
                                     })
-                                    caption_pos.set('right');
                                   }}> 
                         <VscLayoutSidebarRightOff />
                       </IconButton>
