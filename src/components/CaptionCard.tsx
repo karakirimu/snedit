@@ -66,7 +66,7 @@ const CaptionCard: React.ForwardRefRenderFunction<CaptionCardHandle, CaptionCard
                 ref={captionRef}
                 scrollBehavior={"smooth"}
                 as="section"
-                bg="gray.800"
+                bg={{ base: "gray.100", _dark: "gray.800" }}
                 minH={"10ch"}
                 maxH={"30ch"}
                 borderLeft={"1px solid gray.950"}

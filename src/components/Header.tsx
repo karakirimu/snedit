@@ -26,6 +26,7 @@ import { Field } from "@/components/ui/field"
 import { Property } from '@/functions/useProperty';
 import { InfoTip } from "@/components/ui/toggle-tip"
 import { Switch } from './ui/switch';
+import { ColorModeButton } from "@/components/ui/color-mode"
 
 interface HeaderProps {
   onImageFolderSelect: (files: FileList) => void;
@@ -39,7 +40,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onImageFolderSelect, onMusicFolderSelect, onExport, onImport, onIndexChange, config, selectedIndex, lastImageIndex }) => {
-  const ref = useRef<HTMLInputElement>(null)
+  const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -72,12 +73,12 @@ const Header: React.FC<HeaderProps> = ({ onImageFolderSelect, onMusicFolderSelec
   }, [selectedIndex, lastImageIndex, onIndexChange]);
 
   return (
-    <Box as="header" bg={"gray.700"} borderBottom={"1px solid gray.950"} color="white" p={1}>
+    <Box as="header" bg={{ base: "gray.200", _dark: "gray.700" }} borderBottom={"1px solid gray.950"} p={1}>
       <HStack justify="space-between" px={1}>
         <HStack gap={2}>
           <MenuRoot size={"sm"}>
             <MenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="ghost" size="sm">
                 File
               </Button>
             </MenuTrigger>
@@ -92,7 +93,7 @@ const Header: React.FC<HeaderProps> = ({ onImageFolderSelect, onMusicFolderSelec
           </MenuRoot>
           <MenuRoot size={"sm"}>
             <MenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="ghost" size="sm">
                 Edit
               </Button>
             </MenuTrigger>
@@ -123,10 +124,11 @@ const Header: React.FC<HeaderProps> = ({ onImageFolderSelect, onMusicFolderSelec
             </IconButton>
           </HStack>
         )}
-        <HStack gap={4}>
+        <HStack gap={2}>
+          <ColorModeButton/>
           <DialogRoot initialFocusEl={() => ref.current}>
             <DialogTrigger asChild>
-              <IconButton variant="outline" size="sm">
+              <IconButton variant="ghost" size="sm">
                 <FaCog />
               </IconButton>
             </DialogTrigger>

@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ images, selectedIndex, config, onClic
   };
 
   return (
-    <Box as="aside" bg="gray.800" borderRight={"1px solid gray.950"} minW="220px" maxW="220px" p={4} minH="calc(100vh - 44px)" maxH="calc(100vh - 44px)" overflowY="auto">
+    <Box as="aside" bg={{ base: "gray.100", _dark: "gray.800" }} borderRight={"1px solid gray.950"} minW="220px" maxW="220px" p={4} minH="calc(100vh - 44px)" maxH="calc(100vh - 44px)" overflowY="auto">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={images.get().map((img) => img.src.objectURL)} strategy={verticalListSortingStrategy}>
           <VStack align="start" gap={4}>
@@ -118,8 +118,8 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, index, src, selectedIma
         p={2}
         borderRadius="md"
         maxW={"100%"}
-        bg={(selectedImageIndex !== null && index + 1 === selectedImageIndex) ? "gray.700" : "transparent"}
-        _hover={{ bg: "gray.600" }}
+        bg={(selectedImageIndex !== null && index + 1 === selectedImageIndex) ? { base: "gray.200", _dark: "gray.700" } : "transparent"}
+        _hover={{ bg: { base: "gray.300", _dark: "gray.600" } }}
         ref={(selectedImageIndex !== null && index + 1 === selectedImageIndex) ? selectedImageRef : null}
       >
         <VStack align="center" gapY={1}>
