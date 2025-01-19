@@ -110,7 +110,7 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, index, src, selectedIma
       {...attributes}
       {...listeners}
     >
-      <Text w={`${index.toString().length + 1}ch`}>{index + 1}</Text>
+      <Text w={`${index.toString().length + 1}ch`} ml={1}>{index + 1}</Text>
       <Box
         key={index}
         onClick={() => onClick(index + 1)}
