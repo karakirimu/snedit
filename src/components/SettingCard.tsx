@@ -101,7 +101,7 @@ const SettingCard: React.FC<SettingCardProps> = ({ imageSrc, index, config, audi
       <HStack w={"100%"} maxH={"100%"} alignContent={"center"} justifyContent={"center"} alignItems={"center"} direction={"column"}>
         <canvas ref={canvasRef} style={{ border: '0px solid black', maxWidth: '88%', objectFit: "contain" }} />
         <CaptionCard 
-          // ref={captionCardRef}
+          ref={captionCardRef}
           caption={dataIndex !== -1 && selected && selected.text !== undefined ? selected.text.data : ""}
           minW={"20ch"}
           mt={2}

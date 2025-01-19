@@ -50,7 +50,7 @@ function App() {
       snData.forEach((sn) => {
         prev.src.image.push(sn)
         // Generate image dependent playlist
-        prev.playlist.push({ id: v4(), image_id: sn.id, audio_id: '', text_id: '' });
+        prev.playlist.push({ id: v4(), image_id: sn.id, audio_id: '', text_id: '', config: { caption_position: 'bottom' } });
       });
       return ({...prev })
     });
